@@ -19,6 +19,12 @@ type Walnut struct {
 	IsLive           bool
 }
 
+// Response represents highest level of exactonline api response
+//
+type Response struct {
+	Results *json.RawMessage `json:"results"`
+}
+
 func New(apiURL string, storeIdenitifier string, accountToken string, isLive bool) (*Walnut, error) {
 	w := new(Walnut)
 
@@ -66,8 +72,15 @@ func (w *Walnut) Get(url string, model interface{}) error {
 
 	b, err := ioutil.ReadAll(res.Body)
 
-	errr := json.Unmarshal(b, &model)
-	if errr != nil {
+	response := Response{}
+
+	err = json.Unmarshal(b, &response)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(*response.Results, &model)
+	if err != nil {
 		return err
 	}
 
