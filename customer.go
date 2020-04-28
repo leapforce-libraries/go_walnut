@@ -27,13 +27,18 @@ func (w *Walnut) GetChanges(time time.Time) ([]Customer, error) {
 	page := 0
 	rowCount := 1
 
+	err := w.PostLogin()
+	if err != nil {
+		return nil, err
+	}
+
 	customers := []Customer{}
 
 	for rowCount > 0 {
 		page++
 
 		layout := "2006-01-02T15:04:05-0700"
-		url := fmt.Sprintf(urlStr, w.ApiURL, w.StoreIdenitifier, time.Format(layout), strconv.Itoa(page))
+		url := fmt.Sprintf(urlStr, w.ApiURL, w.StoreIdentifier, time.Format(layout), strconv.Itoa(page))
 		//fmt.Println(url)
 
 		cs := []Customer{}
