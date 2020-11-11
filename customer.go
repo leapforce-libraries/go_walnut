@@ -11,12 +11,14 @@ import (
 type Customer struct {
 	UserIdentifier    string   `json:"userIdentifier"`
 	PassIdentifier    string   `json:"passIdentifier"`
+	PassAdded         string   `json:"passAdded"`
 	UserEmail         string   `json:"userEmail"`
 	UserName          string   `json:"userName"`
 	UserBirthday      string   `json:"userBirthday"`
 	UserMobileNumber  string   `json:"userMobileNumber"`
 	UserUnsubscribed  bool     `json:"userUnsubscribed"`
-	UserAdded         string   `json:"userAdded"`
+	UserUpdated       string   `json:"userUpdated"`
+	UserRegistered    string   `json:"userRegistered"`
 	UserLicensePlates []string `json:"userLicensePlates"`
 }
 

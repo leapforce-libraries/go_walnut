@@ -2,3 +2,5 @@ github.com/Leapforce-nl/go_types v0.0.0-20200126202922-ba4900de15b8 h1:q0/mdn+Tn
 github.com/Leapforce-nl/go_types v0.0.0-20200126202922-ba4900de15b8/go.mod h1:AuUJ0pyk3Xc6IgEuzCr5NvEl277YQwiIgJ12/SfmByI=
 github.com/gofrs/uuid v3.2.0+incompatible h1:y12jRkkFxsd7GpqdSZ+/KCs/fJbqpEXSGd4+jfEaewE=
 github.com/gofrs/uuid v3.2.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
+github.com/leapforce-libraries/go_types v0.0.0-20201101222114-6d3ec3839c8c h1:4GY1e071Gyk2sBn8mMVi2rI+DUnqIUP3/IAHvND39w8=
+github.com/leapforce-libraries/go_types v0.0.0-20201101222114-6d3ec3839c8c/go.mod h1:0k0QPi4o2OO3yau759B2U5XIEPbuYTf56QxyF8WdV4o=
