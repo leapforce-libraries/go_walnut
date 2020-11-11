@@ -29,9 +29,11 @@ func (w *Walnut) GetChanges(time time.Time) ([]Customer, error) {
 	page := 0
 	rowCount := 1
 
-	err := w.PostLogin()
-	if err != nil {
-		return nil, err
+	if !w.static {
+		err := w.PostLogin()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	customers := []Customer{}

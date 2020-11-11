@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	types "github.com/leapforce-libraries/go_types"
 )
@@ -20,7 +21,8 @@ type Walnut struct {
 	PartnerToken    string
 	StoreIdentifier string
 	AccountToken    string
-	IsLive          bool
+	static          bool
+	isLive          bool
 }
 
 // Response represents highest level of exactonline api response
@@ -49,7 +51,8 @@ func New(apiURL string, emailAddress string, password string, partnerToken strin
 	w.EmailAddress = emailAddress
 	w.Password = password
 	w.PartnerToken = partnerToken
-	w.IsLive = isLive
+	w.isLive = isLive
+	w.static = false
 
 	if !strings.HasSuffix(w.ApiURL, "/") {
 		w.ApiURL = w.ApiURL + "/"
@@ -58,8 +61,7 @@ func New(apiURL string, emailAddress string, password string, partnerToken strin
 	return w, nil
 }
 
-/*
-func New(apiURL string, storeIdenitifier string, accountToken string, isLive bool) (*Walnut, error) {
+func NewStatic(apiURL string, storeIdenitifier string, accountToken string, isLive bool) (*Walnut, error) {
 	w := new(Walnut)
 
 	if apiURL == "" {
@@ -73,16 +75,17 @@ func New(apiURL string, storeIdenitifier string, accountToken string, isLive boo
 	}
 
 	w.ApiURL = apiURL
-	w.StoreIdenitifier = storeIdenitifier
+	w.StoreIdentifier = storeIdenitifier
 	w.AccountToken = accountToken
-	w.IsLive = isLive
+	w.isLive = isLive
+	w.static = true
 
 	if !strings.HasSuffix(w.ApiURL, "/") {
 		w.ApiURL = w.ApiURL + "/"
 	}
 
 	return w, nil
-}*/
+}
 
 // Get is a generic Get method
 //
@@ -96,8 +99,25 @@ func (w *Walnut) Get(url string, model interface{}) error {
 	req.Header.Set("accept", "application/json")
 	req.Header.Set("authorization", fmt.Sprintf("WalnutPass %s", w.AccountToken))
 
-	// Send out the HTTP request
-	res, err := client.Do(req)
+	attempts := 10
+	attempt := 1
+
+	res := new(http.Response)
+
+	for attempt < attempts {
+		// Send out the HTTP request
+		res, err = client.Do(req)
+		if err != nil {
+			attempt++
+			fmt.Println("url:", url)
+			fmt.Println("error:", err.Error())
+			fmt.Println("starting attempt:", attempt)
+
+			time.Sleep(5 * time.Second)
+		} else {
+			break
+		}
+	}
 	if err != nil {
 		return err
 	}
