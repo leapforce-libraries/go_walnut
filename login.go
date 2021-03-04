@@ -2,38 +2,40 @@ package walnut
 
 import (
 	"fmt"
+
+	errortools "github.com/leapforce-libraries/go_errortools"
 )
 
-// Login stores Login from Walnut
+// Login stores Login from Service
 //
 type Login struct {
 	AccountToken    string `json:"accountToken"`
 	StoreIdentifier string `json:"storeIdentifier"`
 }
 
-// GetChanges retrieves changed Customers from Walnut
+// GetChanges retrieves changed Customers from Service
 //
-func (w *Walnut) PostLogin() error {
-	urlStr := "%slogin"
-	url := fmt.Sprintf(urlStr, w.ApiURL)
+func (service *Service) PostLogin() *errortools.Error {
+	urlStr := "%s/login"
+	url := fmt.Sprintf(urlStr, APIURL)
 	//fmt.Println(url)
 
 	login := Login{}
 
 	data := make(map[string]string)
-	data["accountEmailAddress"] = w.EmailAddress
-	data["accountPassword"] = w.Password
-	data["partnerToken"] = w.PartnerToken
+	data["accountEmailAddress"] = service.EmailAddress
+	data["accountPassword"] = service.Password
+	data["partnerToken"] = service.PartnerToken
 
-	err := w.Post(url, data, &login, false, false)
-	if err != nil {
-		return err
+	e := service.Post(url, data, &login, false, false)
+	if e != nil {
+		return e
 	}
 
-	w.StoreIdentifier = login.StoreIdentifier
-	w.AccountToken = login.AccountToken
+	service.StoreIdentifier = login.StoreIdentifier
+	service.AccountToken = login.AccountToken
 
-	//fmt.Println(w)
+	//fmt.Println(service)
 
 	return nil
 }

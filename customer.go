@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	errortools "github.com/leapforce-libraries/go_errortools"
 )
 
-// Customer stores Customer from Walnut
+// Customer stores Customer from Service
 //
 type Customer struct {
 	UserIdentifier    string   `json:"userIdentifier"`
@@ -22,17 +24,17 @@ type Customer struct {
 	UserLicensePlates []string `json:"userLicensePlates"`
 }
 
-// GetChanges retrieves changed Customers from Walnut
+// GetChanges retrieves changed Customers from Service
 //
-func (w *Walnut) GetChanges(time time.Time) ([]Customer, error) {
-	urlStr := "%sstore/%s/changes?date=%s&page=%s"
+func (service *Service) GetChanges(time time.Time) ([]Customer, *errortools.Error) {
+	urlStr := "%s/store/%s/changes?date=%s&page=%s"
 	page := 0
 	rowCount := 1
 
-	if !w.static {
-		err := w.PostLogin()
-		if err != nil {
-			return nil, err
+	if !service.static {
+		e := service.PostLogin()
+		if e != nil {
+			return nil, e
 		}
 	}
 
@@ -42,14 +44,14 @@ func (w *Walnut) GetChanges(time time.Time) ([]Customer, error) {
 		page++
 
 		layout := "2006-01-02T15:04:05-0700"
-		url := fmt.Sprintf(urlStr, w.ApiURL, w.StoreIdentifier, time.Format(layout), strconv.Itoa(page))
+		url := fmt.Sprintf(urlStr, APIURL, service.StoreIdentifier, time.Format(layout), strconv.Itoa(page))
 		//fmt.Println(url)
 
 		cs := []Customer{}
 
-		err := w.Get(url, &cs)
-		if err != nil {
-			return nil, err
+		e := service.Get(url, &cs)
+		if e != nil {
+			return nil, e
 		}
 
 		for _, c := range cs {
