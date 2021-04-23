@@ -1,181 +1,132 @@
 package walnut
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"time"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
+	go_http "github.com/leapforce-libraries/go_http"
 )
 
 const (
-	APIURL string = "https://walnutbackend.com/api/v1"
+	apiURL     string = "https://walnutbackend.com/api/v1"
+	dateLayout string = "2006-01-02T15:04:05-0700"
 )
 
-// type
-//
-type Service struct {
-	EmailAddress    string
-	Password        string
-	PartnerToken    string
-	StoreIdentifier string
-	AccountToken    string
-	static          bool
-	isLive          bool
-}
-
-// Response represents highest level of exactonline api response
-//
 type Response struct {
 	Results *json.RawMessage `json:"results"`
 }
 
-func NewService(emailAddress string, password string, partnerToken string, isLive bool) (*Service, *errortools.Error) {
-	service := new(Service)
+type Service struct {
+	emailAddress    string
+	password        string
+	partnerToken    string
+	storeIdentifier string
+	accountToken    string
+	static          bool
+	httpService     *go_http.Service
+}
 
-	if emailAddress == "" {
+type ServiceConfig struct {
+	EmailAddress string
+	Password     string
+	PartnerToken string
+}
+
+func NewService(config *ServiceConfig) (*Service, *errortools.Error) {
+	if config == nil {
+		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
+	}
+
+	if config.EmailAddress == "" {
 		return nil, errortools.ErrorMessage("Service emailAddress not provided")
 	}
-	if password == "" {
+	if config.Password == "" {
 		return nil, errortools.ErrorMessage("Service password not provided")
 	}
-	if partnerToken == "" {
+	if config.PartnerToken == "" {
 		return nil, errortools.ErrorMessage("Service partnerToken not provided")
 	}
 
-	service.EmailAddress = emailAddress
-	service.Password = password
-	service.PartnerToken = partnerToken
-	service.isLive = isLive
-	service.static = false
+	httpService, e := go_http.NewService(&go_http.ServiceConfig{})
+	if e != nil {
+		return nil, e
+	}
 
-	return service, nil
+	return &Service{
+		emailAddress: config.EmailAddress,
+		password:     config.Password,
+		partnerToken: config.PartnerToken,
+		static:       false,
+		httpService:  httpService,
+	}, nil
 }
 
-func NewServiceStatic(storeIdenitifier string, accountToken string, isLive bool) (*Service, *errortools.Error) {
-	service := new(Service)
+type ServiceStaticConfig struct {
+	StoreIdentifier string
+	AccountToken    string
+}
 
-	if storeIdenitifier == "" {
-		return nil, errortools.ErrorMessage("Service StoreIdenitifier not provided")
+func NewServiceStatic(config *ServiceStaticConfig) (*Service, *errortools.Error) {
+	if config == nil {
+		return nil, errortools.ErrorMessage("ServiceConfig must not be a nil pointer")
 	}
-	if accountToken == "" {
+
+	if config.StoreIdentifier == "" {
+		return nil, errortools.ErrorMessage("Service StoreIdentifier not provided")
+	}
+	if config.AccountToken == "" {
 		return nil, errortools.ErrorMessage("Service AccountToken not provided")
 	}
 
-	service.StoreIdentifier = storeIdenitifier
-	service.AccountToken = accountToken
-	service.isLive = isLive
-	service.static = true
+	httpService, e := go_http.NewService(&go_http.ServiceConfig{})
+	if e != nil {
+		return nil, e
+	}
 
-	return service, nil
+	return &Service{
+		storeIdentifier: config.StoreIdentifier,
+		accountToken:    config.AccountToken,
+		static:          true,
+		httpService:     httpService,
+	}, nil
 }
 
-// Get is a generic Get method
-//
-func (service *Service) Get(url string, model interface{}) *errortools.Error {
-	client := &http.Client{}
+func (service *Service) httpRequest(httpMethod string, requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+	// add token
+	header := http.Header{}
+	header.Set("authorization", fmt.Sprintf("WalnutPass %s", service.accountToken))
+	(*requestConfig).NonDefaultHeaders = &header
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return errortools.ErrorMessage(err)
-	}
-	req.Header.Set("accept", "application/json")
-	req.Header.Set("authorization", fmt.Sprintf("WalnutPass %s", service.AccountToken))
+	request, response, e := service.httpService.HTTPRequest(httpMethod, requestConfig)
 
-	attempts := 10
-	attempt := 1
+	return request, response, e
+}
 
-	res := new(http.Response)
+func (service *Service) url(path string) string {
+	return fmt.Sprintf("%s/%s", apiURL, path)
+}
 
-	for attempt < attempts {
-		// Send out the HTTP request
-		res, err = client.Do(req)
-		if err != nil {
-			attempt++
-			fmt.Println("url:", url)
-			fmt.Println("error:", err.Error())
-			fmt.Println("starting attempt:", attempt)
-
-			time.Sleep(5 * time.Second)
-		} else {
-			break
-		}
-	}
-	if err != nil {
-		return errortools.ErrorMessage(err)
-	}
-
-	defer res.Body.Close()
-
-	b, err := ioutil.ReadAll(res.Body)
+func (service *Service) get(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+	responseModel := requestConfig.ResponseModel
 
 	response := Response{}
+	requestConfig.ResponseModel = &response
 
-	err = json.Unmarshal(b, &response)
-	if err != nil {
-		return errortools.ErrorMessage(err)
+	req, res, e := service.httpRequest(http.MethodGet, requestConfig)
+	if e != nil {
+		return req, res, e
 	}
 
-	err = json.Unmarshal(*response.Results, &model)
+	err := json.Unmarshal(*response.Results, responseModel)
 	if err != nil {
-		return errortools.ErrorMessage(err)
+		return req, res, errortools.ErrorMessage(err)
 	}
 
-	return nil
+	return req, res, nil
 }
 
-// Post is a generic Post method
-//
-func (service *Service) Post(url string, values map[string]string, model interface{}, authorize bool, responseWrapped bool) *errortools.Error {
-	client := &http.Client{}
-
-	buf := new(bytes.Buffer)
-	if values != nil {
-		json.NewEncoder(buf).Encode(values)
-	} else {
-		buf = nil
-	}
-
-	req, err := http.NewRequest(http.MethodPost, url, buf)
-	if err != nil {
-		return errortools.ErrorMessage(err)
-	}
-
-	// add headers
-	req.Header.Set("accept", "application/json")
-	if authorize {
-		req.Header.Set("authorization", fmt.Sprintf("WalnutPass %s", service.AccountToken))
-	}
-
-	// Send out the HTTP request
-	res, err := client.Do(req)
-	if err != nil {
-		return errortools.ErrorMessage(err)
-	}
-
-	defer res.Body.Close()
-
-	b, err := ioutil.ReadAll(res.Body)
-
-	if responseWrapped {
-
-		response := Response{}
-
-		err = json.Unmarshal(b, &response)
-		if err != nil {
-			return errortools.ErrorMessage(err)
-		}
-
-		b = *response.Results
-	}
-
-	err = json.Unmarshal(b, &model)
-	if err != nil {
-		return errortools.ErrorMessage(err)
-	}
-
-	return nil
+func (service *Service) post(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+	return service.httpRequest(http.MethodPost, requestConfig)
 }

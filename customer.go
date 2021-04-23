@@ -6,6 +6,7 @@ import (
 	"time"
 
 	errortools "github.com/leapforce-libraries/go_errortools"
+	go_http "github.com/leapforce-libraries/go_http"
 )
 
 // Customer stores Customer from Service
@@ -26,8 +27,7 @@ type Customer struct {
 
 // GetChanges retrieves changed Customers from Service
 //
-func (service *Service) GetChanges(time time.Time) ([]Customer, *errortools.Error) {
-	urlStr := "%s/store/%s/changes?date=%s&page=%s"
+func (service *Service) GetChanges(time time.Time) (*[]Customer, *errortools.Error) {
 	page := 0
 	rowCount := 1
 
@@ -43,13 +43,13 @@ func (service *Service) GetChanges(time time.Time) ([]Customer, *errortools.Erro
 	for rowCount > 0 {
 		page++
 
-		layout := "2006-01-02T15:04:05-0700"
-		url := fmt.Sprintf(urlStr, APIURL, service.StoreIdentifier, time.Format(layout), strconv.Itoa(page))
-		//fmt.Println(url)
-
 		cs := []Customer{}
 
-		e := service.Get(url, &cs)
+		requestConfig := go_http.RequestConfig{
+			URL:           service.url(fmt.Sprintf("store/%s/changes?date=%s&page=%s", service.storeIdentifier, time.Format(dateLayout), strconv.Itoa(page))),
+			ResponseModel: &cs,
+		}
+		_, _, e := service.get(&requestConfig)
 		if e != nil {
 			return nil, e
 		}
@@ -65,5 +65,5 @@ func (service *Service) GetChanges(time time.Time) ([]Customer, *errortools.Erro
 		customers = nil
 	}
 
-	return customers, nil
+	return &customers, nil
 }

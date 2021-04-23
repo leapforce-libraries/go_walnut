@@ -1,9 +1,8 @@
 package walnut
 
 import (
-	"fmt"
-
 	errortools "github.com/leapforce-libraries/go_errortools"
+	go_http "github.com/leapforce-libraries/go_http"
 )
 
 // Login stores Login from Service
@@ -16,26 +15,31 @@ type Login struct {
 // GetChanges retrieves changed Customers from Service
 //
 func (service *Service) PostLogin() *errortools.Error {
-	urlStr := "%s/login"
-	url := fmt.Sprintf(urlStr, APIURL)
-	//fmt.Println(url)
-
 	login := Login{}
 
-	data := make(map[string]string)
-	data["accountEmailAddress"] = service.EmailAddress
-	data["accountPassword"] = service.Password
-	data["partnerToken"] = service.PartnerToken
+	bodyModel := struct {
+		AccountEmailAddress string `json:"accountEmailAddress"`
+		AccountPassword     string `json:"accountPassword"`
+		PartnerToken        string `json:"partnerToken"`
+	}{
+		service.emailAddress,
+		service.password,
+		service.partnerToken,
+	}
 
-	e := service.Post(url, data, &login, false, false)
+	requestConfig := go_http.RequestConfig{
+		URL:           service.url("login"),
+		BodyModel:     bodyModel,
+		ResponseModel: &login,
+	}
+
+	_, _, e := service.post(&requestConfig)
 	if e != nil {
 		return e
 	}
 
-	service.StoreIdentifier = login.StoreIdentifier
-	service.AccountToken = login.AccountToken
-
-	//fmt.Println(service)
+	service.storeIdentifier = login.StoreIdentifier
+	service.accountToken = login.AccountToken
 
 	return nil
 }
