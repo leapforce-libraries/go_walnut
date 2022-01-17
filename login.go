@@ -1,6 +1,8 @@
 package walnut
 
 import (
+	"net/http"
+
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
 )
@@ -28,12 +30,13 @@ func (service *Service) PostLogin() *errortools.Error {
 	}
 
 	requestConfig := go_http.RequestConfig{
+		Method:        http.MethodPost,
 		URL:           service.url("login"),
 		BodyModel:     bodyModel,
 		ResponseModel: &login,
 	}
 
-	_, _, e := service.post(&requestConfig)
+	_, _, e := service.httpRequest(&requestConfig)
 	if e != nil {
 		return e
 	}

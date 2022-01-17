@@ -2,6 +2,7 @@ package walnut
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -46,17 +47,16 @@ func (service *Service) GetChanges(time time.Time) (*[]Customer, *errortools.Err
 		cs := []Customer{}
 
 		requestConfig := go_http.RequestConfig{
+			Method:        http.MethodGet,
 			URL:           service.url(fmt.Sprintf("store/%s/changes?date=%s&page=%s", service.storeIdentifier, time.Format(dateLayout), strconv.Itoa(page))),
 			ResponseModel: &cs,
 		}
-		_, _, e := service.get(&requestConfig)
+		_, _, e := service.getResponse(&requestConfig)
 		if e != nil {
 			return nil, e
 		}
 
-		for _, c := range cs {
-			customers = append(customers, c)
-		}
+		customers = append(customers, cs...)
 
 		rowCount = len(cs)
 	}

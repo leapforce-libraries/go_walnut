@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	apiName    string = "Walnut"
 	apiURL     string = "https://walnutbackend.com/api/v1"
 	dateLayout string = "2006-01-02T15:04:05-0700"
 )
@@ -93,13 +94,13 @@ func NewServiceStatic(config *ServiceStaticConfig) (*Service, *errortools.Error)
 	}, nil
 }
 
-func (service *Service) httpRequest(httpMethod string, requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
 	// add token
 	header := http.Header{}
 	header.Set("authorization", fmt.Sprintf("WalnutPass %s", service.accountToken))
 	(*requestConfig).NonDefaultHeaders = &header
 
-	request, response, e := service.httpService.HTTPRequest(httpMethod, requestConfig)
+	request, response, e := service.httpService.HTTPRequest(requestConfig)
 
 	return request, response, e
 }
@@ -108,13 +109,13 @@ func (service *Service) url(path string) string {
 	return fmt.Sprintf("%s/%s", apiURL, path)
 }
 
-func (service *Service) get(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
+func (service *Service) getResponse(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
 	responseModel := requestConfig.ResponseModel
 
 	response := Response{}
 	requestConfig.ResponseModel = &response
 
-	req, res, e := service.httpRequest(http.MethodGet, requestConfig)
+	req, res, e := service.httpRequest(requestConfig)
 	if e != nil {
 		return req, res, e
 	}
@@ -127,6 +128,18 @@ func (service *Service) get(requestConfig *go_http.RequestConfig) (*http.Request
 	return req, res, nil
 }
 
-func (service *Service) post(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
-	return service.httpRequest(http.MethodPost, requestConfig)
+func (service Service) APIName() string {
+	return apiName
+}
+
+func (service Service) APIKey() string {
+	return service.accountToken
+}
+
+func (service Service) APICallCount() int64 {
+	return service.httpService.RequestCount()
+}
+
+func (service *Service) APIReset() {
+	service.httpService.ResetRequestCount()
 }
