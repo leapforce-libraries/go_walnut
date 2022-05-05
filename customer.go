@@ -48,7 +48,7 @@ func (service *Service) GetChanges(time time.Time) (*[]Customer, *errortools.Err
 
 		requestConfig := go_http.RequestConfig{
 			Method:        http.MethodGet,
-			URL:           service.url(fmt.Sprintf("store/%s/changes?date=%s&page=%s", service.storeIdentifier, time.Format(dateLayout), strconv.Itoa(page))),
+			Url:           service.url(fmt.Sprintf("store/%s/changes?date=%s&page=%s", service.storeIdentifier, time.Format(dateLayout), strconv.Itoa(page))),
 			ResponseModel: &cs,
 		}
 		_, _, e := service.getResponse(&requestConfig)

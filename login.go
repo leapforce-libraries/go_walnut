@@ -31,7 +31,7 @@ func (service *Service) PostLogin() *errortools.Error {
 
 	requestConfig := go_http.RequestConfig{
 		Method:        http.MethodPost,
-		URL:           service.url("login"),
+		Url:           service.url("login"),
 		BodyModel:     bodyModel,
 		ResponseModel: &login,
 	}

@@ -11,7 +11,7 @@ import (
 
 const (
 	apiName    string = "Walnut"
-	apiURL     string = "https://walnutbackend.com/api/v1"
+	apiUrl     string = "https://walnutbackend.com/api/v1"
 	dateLayout string = "2006-01-02T15:04:05-0700"
 )
 
@@ -100,13 +100,13 @@ func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http
 	header.Set("authorization", fmt.Sprintf("WalnutPass %s", service.accountToken))
 	(*requestConfig).NonDefaultHeaders = &header
 
-	request, response, e := service.httpService.HTTPRequest(requestConfig)
+	request, response, e := service.httpService.HttpRequest(requestConfig)
 
 	return request, response, e
 }
 
 func (service *Service) url(path string) string {
-	return fmt.Sprintf("%s/%s", apiURL, path)
+	return fmt.Sprintf("%s/%s", apiUrl, path)
 }
 
 func (service *Service) getResponse(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
